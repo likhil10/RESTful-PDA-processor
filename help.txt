@@ -1,0 +1,6 @@
+curl -X PUT -H "Content-Type: application/json" -d '{"ID":"1", "Name":"hellobufallo"}' http://localhost:10000/pdas/1
+curl -X PUT -H "Content-Type: application/json" -d '{"name":"mkyong","email":"abc@gmail.com"}' http://localhost:10000/pdas/100
+
+
+for windows:
+curl -X POST -d "{\"ID\": \"1\", \"Name\": \"Baggins\"}" -H "Content-Type:application/json" localhost:10000/pdas/1
