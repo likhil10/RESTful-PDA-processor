@@ -11,8 +11,46 @@ import (
 )
 
 type pdaList struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	// Note: field names must begin with capital letter for JSON
+	ID              string     `json:"id"`
+	Name            string     `json:"name"`
+	States          []string   `json:"states"`
+	InputAlphabet   []string   `json:"inputAlphabet"`
+	StackAlphabet   []string   `json:"stackAlphabet"`
+	AcceptingStates []string   `json:"acceptingStates"`
+	StartState      string     `json:"startState"`
+	Transitions     [][]string `json:"transitions"`
+	Eos             string     `json:"eos"`
+
+	// Holds the current state.
+	CurrentState string
+
+	// Token at the top of the stack.
+	CurrentStack string
+
+	// This slice is used to hold the transition states tokens.
+	TransitionStack []string
+
+	// This slice is used to hold the token stack.
+	TokenStack []string
+
+	// This keeps a count of everytime put method is called
+	PutCounter int
+
+	// This keeps a count of everytime is_accepted method is called
+	IsAcceptedCount int
+
+	// This keeps a count of everytime peek method is called
+	Peek int
+
+	// This keeps a count for everytime a transition  is changed
+	TransitionCounter int
+
+	// This keeps a count for everytime current_state method is called
+	CurrentStateCounter int
+
+	// This checks if the input is accepted by the PDA
+	IsAccepted bool
 }
 
 var Pda []pdaList
@@ -33,8 +71,8 @@ func resetPDA(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(Pda); i++ {
 		if Pda[i].ID == id {
 			fmt.Println("entered the if block")
-			// Pda[i].Stack = make([]string, 0)
-			// Pda[i].CurrentState = pdaList.StartState
+			Pda[i].TokenStack = []string{}
+			Pda[i].CurrentState = Pda[i].StartState
 		}
 	}
 }

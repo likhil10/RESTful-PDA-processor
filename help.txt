@@ -3,4 +3,4 @@ curl -X PUT -H "Content-Type: application/json" -d '{"name":"mkyong","email":"ab
 
 
 for windows:
-curl -X POST -d "{\"ID\": \"1\", \"Name\": \"Baggins\"}" -H "Content-Type:application/json" localhost:10000/pdas/1
+curl -X POST -d "{\"id\": \"1\", \"name\": \"Baggins\", \"states\": [\"q1\",\"q2\",\"q3\",\"q4\"], \"inputAlphabet\" : [\"1\", \"0\"] , \"stackAlphabet\" : [\"1\",\"0\"], \"acceptingStates\" : [\"q1\",\"q4\"], \"startState\":\"q1\",\"transitions\":[[\"q1\",\"null\",\"null\",\"q2\",\"$\"],[\"q2\",\"1\",\"null\",\"q2\",\"1\"],[\"q2\",\"0\",\"1\",\"q3\",\"null\"],[\"q3\",\"0\",\"1\",\"q3\",\"null\"],[\"q3\",\"null\",\"$\",\"q4\",\"null\"]], \"eos\":\"$\"}" -H "Content-Type:application/json" localhost:10000/pdas/1
