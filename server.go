@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -51,13 +52,31 @@ type pdaList struct {
 
 	// This checks if the input is accepted by the PDA
 	IsAccepted bool
+
+	// for storing the positions
+	HoldBackPosition []int
+
+	// for the tokens that were not consumed and held back due to postion
+	HoldBackToken []string
+
+	// to store the position of the token last consumed
+	LastPosition int
 }
 
-var Pda []pdaList
+// TokenList struct
+type TokenList struct {
+	// takes the tokens from the http request body
+	Tokens string `json:"tokens"`
+}
+
+var pdaArr []pdaList
+
+var tokenArr []TokenList
+var positionArr []int
 
 func showPdas(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: returnAllPda")
-	json.NewEncoder(w).Encode(Pda)
+	json.NewEncoder(w).Encode(pdaArr)
 }
 
 func homepage(w http.ResponseWriter, r *http.Request) {
@@ -68,25 +87,91 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 func resetPDA(w http.ResponseWriter, r *http.Request) {
 	var vars = mux.Vars(r)
 	var id = vars["id"]
-	for i := 0; i < len(Pda); i++ {
-		if Pda[i].ID == id {
+	for i := 0; i < len(pdaArr); i++ {
+		if pdaArr[i].ID == id {
 			fmt.Println("entered the if block")
-			Pda[i].TokenStack = []string{}
-			Pda[i].CurrentState = Pda[i].StartState
+			pdaArr[i].TokenStack = []string{}
+			pdaArr[i].CurrentState = pdaArr[i].StartState
 		}
 	}
 }
 
 func createNewPda(w http.ResponseWriter, r *http.Request) {
-	// unmarshal the body of POST request into new PDA struct and append this to our PDA array.
+	// unmarshal the body of PUT request into new PDA struct and append this to our PDA array.
 	reqBody, _ := ioutil.ReadAll(r.Body)
-	// fmt.Fprintf(w, "%+v", string(reqBody))
+	params := mux.Vars(r)
 	var pda pdaList
 	json.Unmarshal(reqBody, &pda)
-	// update our global Pda array
-	Pda = append(Pda, pda)
+	if len(pdaArr) > 0 {
+		for i := 0; i < len(pdaArr); i++ {
+			if pdaArr[i].ID == params["id"] {
+				panic("This PDA already exists")
+			} else {
+				// update our global pdaArr array
+				pdaArr = append(pdaArr, pda)
+			}
+		}
+	} else {
+		// update our global pdaArr array
+		pdaArr = append(pdaArr, pda)
+	}
+}
 
-	json.NewEncoder(w).Encode(pda)
+func putPda(w http.ResponseWriter, r *http.Request) {
+	// var pda pdaList
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	params := mux.Vars(r)
+	var token TokenList
+	position := params["position"]
+	id := params["id"]
+	json.Unmarshal(reqBody, &token)
+	positionInt, err := strconv.Atoi(position)
+	if err == nil {
+		for i := 0; i < len(pdaArr); i++ {
+			if pdaArr[i].ID == id {
+				put(&pdaArr[i], positionInt, token.Tokens)
+				break
+			} else {
+				fmt.Printf("Error finding given PDA")
+			}
+		}
+	}
+}
+
+func getTokens(w http.ResponseWriter, r *http.Request) {
+	// parse the path parameters
+	vars := mux.Vars(r)
+	// extract the `id` of the pda we wish to delete
+	id := vars["id"]
+
+	// we then need to loop through all our pdas
+	for _, pda := range pdaArr {
+		// if our id path parameter matches one of the pdas
+		if pda.ID == id {
+			// call the queueTokens() function
+			queuedTokens(&pda)
+			json.NewEncoder(w).Encode(pda.HoldBackToken)
+			break
+		}
+	}
+}
+
+func deletePda(w http.ResponseWriter, r *http.Request) {
+	// parse the path parameters
+	vars := mux.Vars(r)
+	// extract the `id` of the pda we wish to delete
+	id := vars["id"]
+
+	// we then need to loop through all our pdas
+	for index, pda := range pdaArr {
+		// if our id path parameter matches one of the pdas
+		if pda.ID == id {
+			// updates our pdaArray array to remove the pda
+			pdaArr = append(pdaArr[:index], pdaArr[index+1:]...)
+			break
+		}
+	}
+
 }
 
 func handleRequests() {
@@ -94,9 +179,12 @@ func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	myRouter.HandleFunc("/", homepage)
-	myRouter.HandleFunc("/pdas", showPdas)
-	myRouter.HandleFunc("/pdas/{id}", createNewPda)
-	myRouter.HandleFunc("/pdas/{id}/reset", resetPDA)
+	myRouter.HandleFunc("/pdas", showPdas).Methods("GET")
+	myRouter.HandleFunc("/pdas/{id}", createNewPda).Methods("PUT")
+	myRouter.HandleFunc("/pdas/{id}/reset", resetPDA).Methods("PUT")
+	myRouter.HandleFunc("/pdas/{id}/tokens/{position}", putPda).Methods("PUT")
+	myRouter.HandleFunc("/pdas/{id}/tokens", getTokens).Methods("GET")
+	myRouter.HandleFunc("/pdas/{id}/delete", deletePda).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":10000", myRouter))
 }
