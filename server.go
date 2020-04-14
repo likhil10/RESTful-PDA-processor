@@ -72,9 +72,9 @@ type TokenList struct {
 
 // JSONMessage Structure
 type JSONMessage struct {
-	curState    string
-	quToken    []string
-	peekK []string
+	curState string
+	quToken  []string
+	peekK    []string
 }
 
 var pdaArr []PdaProcessor
@@ -99,6 +99,7 @@ func resetPDA(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("entered the if block")
 			pdaArr[i].TokenStack = []string{}
 			pdaArr[i].CurrentState = pdaArr[i].StartState
+			break
 		}
 	}
 }
