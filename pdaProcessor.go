@@ -49,7 +49,6 @@ func put(pda *PdaProcessor, position int, token string) {
 gotoPoint:
 	if takeToken {
 		takeToken = false
-		fmt.Printf("hello sexy")
 		for j := 1; j < transitionLength; j++ {
 			t := transitions[j]
 
