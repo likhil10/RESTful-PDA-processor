@@ -72,8 +72,8 @@ type TokenList struct {
 
 // JSONMessage Structure
 type JSONMessage struct {
-	cs    string
-	qt    []string
+	curState    string
+	quToken    []string
 	peekK []string
 }
 
@@ -191,13 +191,10 @@ func eosPDA(w http.ResponseWriter, r *http.Request) {
 
 	for i := 0; i < len(pdaArr); i++ {
 		if pdaArr[i].ID == id {
-			if len(pdaArr[i].TokenStack) > l { // Removes tokens after given position (excluding) and calls eos()
-				for j := 0; j < (len(pdaArr[i].TokenStack) - l); j++ {
-					pop(&pdaArr[i])
-				}
+			if len(pdaArr[i].TokenStack) == l {
 				eos(&pdaArr[i])
 			} else {
-				fmt.Println(w, "Tokens till given position not consumed yet")
+				fmt.Println(w, "Incorrect Position Value Passed")
 			}
 		}
 	}
@@ -284,8 +281,8 @@ func snapshotPDA(w http.ResponseWriter, r *http.Request) {
 
 	for i := 0; i < len(pdaArr); i++ {
 		if pdaArr[i].ID == id {
-			message.cs = currentState(&pdaArr[i])
-			// message.qt = <Call function to return queued_tokens>
+			message.curState = currentState(&pdaArr[i])
+			message.quToken = pdaArr[i].HoldBackToken
 			message.peekK = peek(&pdaArr[i], k)
 		}
 	}
