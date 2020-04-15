@@ -43,5 +43,9 @@ curl -X GET -H "Content-Type:application/json" localhost:10000/pdas/1/snapshot/1
 #base/pdas/id/close
 curl -X DELETE -H "Content-Type:application/json" localhost:10000/pdas/1/delete
 
+#base/pdas/id <Creating TestPDA>
+curl -X PUT -d "{\"id\": \"2\", \"name\": \"TestPDA\", \"states\": [\"q1\",\"q2\",\"q3\",\"q4\"], \"inputAlphabet\" : [\"1\", \"0\"] , \"stackAlphabet\" : [\"1\",\"0\"], \"acceptingStates\" : [\"q1\",\"q4\"], \"startState\":\"q1\",\"transitions\":[[\"q1\",\"null\",\"null\",\"q2\",\"$\"],[\"q2\",\"1\",\"null\",\"q2\",\"1\"],[\"q2\",\"0\",\"1\",\"q3\",\"null\"],[\"q3\",\"0\",\"1\",\"q3\",\"null\"],[\"q3\",\"null\",\"$\",\"q4\",\"null\"]], \"eos\":\"$\"}" -H "Content-Type:application/json" localhost:10000/pdas/2
+
+
 curl -X GET -H "Content-Type:application/json" localhost:10000/pdas
 
