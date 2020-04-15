@@ -48,7 +48,6 @@ func put(pda *PdaProcessor, position int, token string) {
 				pda.CurrentState = "q4"
 				pda.TransitionStack = append(pda.TransitionStack, pda.CurrentState)
 				pop(pda)
-				// fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")
 			}
 			eos(pda)
 			return
@@ -117,7 +116,6 @@ gotoPoint:
 				pda.CurrentState = "q4"
 				pda.TransitionStack = append(pda.TransitionStack, pda.CurrentState)
 				pop(pda)
-				// fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")
 			}
 			eos(pda)
 		}
@@ -185,7 +183,6 @@ func eos(pda *PdaProcessor) {
 			pda.CurrentState = "q4"
 			pda.TransitionStack = append(pda.TransitionStack, pda.CurrentState)
 			pop(pda)
-			// fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")
 			if len(pda.TransitionStack) > 0 && pda.TransitionStack[0] == "q1" && pda.TransitionStack[len(pda.TransitionStack)-1] == "q4" {
 				fmt.Println(pda.TransitionStack[len(pda.TransitionStack)-1])
 				fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")

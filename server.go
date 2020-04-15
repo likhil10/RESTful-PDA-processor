@@ -104,6 +104,8 @@ func resetPDA(w http.ResponseWriter, r *http.Request) {
 			pdaArr[i].CurrentState = pdaArr[i].StartState
 			pdaArr[i].TransitionStack = []string{}
 			break
+		} else {
+			fmt.Fprintf(w, "Error finding PDA")
 		}
 	}
 }
@@ -116,21 +118,17 @@ func eosPDA(w http.ResponseWriter, r *http.Request) {
 	position, err := strconv.Atoi(pos)
 
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("position 1", position)
-
-	for i := 0; i < len(pdaArr); i++ {
-		if pdaArr[i].ID == id {
-			fmt.Println("position 2", position)
-			if pdaArr[i].LastPosition == position {
-				fmt.Println("position 3", position)
-				eos(&pdaArr[i])
+		fmt.Fprintf(w, "%s", err)
+	} else {
+		for i := 0; i < len(pdaArr); i++ {
+			if pdaArr[i].ID == id {
+				if pdaArr[i].LastPosition == position {
+					eos(&pdaArr[i])
+				} else {
+					pdaArr[i].EosPosition = position
+				}
 			} else {
-				pdaArr[i].EosPosition = position
-				fmt.Println("position 4", position)
-				fmt.Println("position eos", pdaArr[i].EosPosition)
+				fmt.Fprintf(w, "Error finding PDA")
 			}
 		}
 	}
@@ -145,7 +143,7 @@ func createNewPda(w http.ResponseWriter, r *http.Request) {
 	if len(pdaArr) > 0 {
 		for i := 0; i < len(pdaArr); i++ {
 			if pdaArr[i].ID == params["id"] {
-				panic("This PDA already exists")
+				fmt.Fprintf(w, "THIS PDA ALREADY EXISTS")
 			} else {
 				// update our global pdaArr array
 				pdaArr = append(pdaArr, pda)
@@ -168,12 +166,23 @@ func putPda(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		for i := 0; i < len(pdaArr); i++ {
 			if pdaArr[i].ID == id {
-				put(&pdaArr[i], positionInt, token.Tokens)
-				break
+				for j := 0; j < len(pdaArr[i].HoldBackPosition)-1; j++ {
+					if pdaArr[i].HoldBackPosition[j] == positionInt {
+						fmt.Fprintf(w, "The position is already taken, please input TOKEN for a new position")
+					}
+				}
+				if pdaArr[i].LastPosition > positionInt {
+					fmt.Fprintf(w, "The position is already taken, please input TOKEN for a new position")
+				} else {
+					put(&pdaArr[i], positionInt, token.Tokens)
+					break
+				}
 			} else {
-				fmt.Printf("Error finding given PDA")
+				fmt.Fprintf(w, "Error finding PDA")
 			}
 		}
+	} else {
+		fmt.Fprintf(w, "%s", err)
 	}
 }
 
@@ -191,6 +200,8 @@ func getTokens(w http.ResponseWriter, r *http.Request) {
 			queuedTokens(&pda)
 			json.NewEncoder(w).Encode(pda.HoldBackToken)
 			break
+		} else {
+			fmt.Fprintf(w, "Error finding PDA")
 		}
 	}
 }
@@ -208,6 +219,8 @@ func deletePda(w http.ResponseWriter, r *http.Request) {
 			// updates our pdaArray array to remove the pda
 			pdaArr = append(pdaArr[:index], pdaArr[index+1:]...)
 			break
+		} else {
+			fmt.Fprintf(w, "Error finding PDA")
 		}
 	}
 
@@ -222,10 +235,11 @@ func isAcceptedPDA(w http.ResponseWriter, r *http.Request) {
 		if pdaArr[i].ID == id {
 			accepted = isAccepted(&pdaArr[i])
 			break
+		} else {
+			fmt.Fprintf(w, "Error finding PDA")
 		}
 	}
 	json.NewEncoder(w).Encode(accepted)
-	//fmt.Fprintln(w, strconv.FormatBool(accepted))
 	return
 }
 
@@ -234,19 +248,18 @@ func stackTopPDA(w http.ResponseWriter, r *http.Request) {
 	var id = vars["id"]
 	var kStr = vars["k"]
 	k, err := strconv.Atoi(kStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	var returnStack []string
-
-	for i := 0; i < len(pdaArr); i++ {
-		if pdaArr[i].ID == id {
-			returnStack = peek(&pdaArr[i], k)
+	if err != nil {
+		fmt.Fprintf(w, "%s", err)
+	} else {
+		for i := 0; i < len(pdaArr); i++ {
+			if pdaArr[i].ID == id {
+				returnStack = peek(&pdaArr[i], k)
+			}
 		}
+		json.NewEncoder(w).Encode(returnStack)
 	}
-	json.NewEncoder(w).Encode(returnStack)
-	//fmt.Fprintln(w, returnStack)
+
 	return
 }
 
@@ -258,10 +271,11 @@ func stackLenPDA(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(pdaArr); i++ {
 		if pdaArr[i].ID == id {
 			length = len(pdaArr[i].TokenStack)
+		} else {
+			fmt.Fprintf(w, "Error finding PDA")
 		}
 	}
 	json.NewEncoder(w).Encode(length)
-	//fmt.Fprintln(w, length)
 	return
 }
 
@@ -273,10 +287,11 @@ func statePDA(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(pdaArr); i++ {
 		if pdaArr[i].ID == id {
 			cs = currentState(&pdaArr[i])
+		} else {
+			fmt.Fprintf(w, "Error finding PDA")
 		}
 	}
 	json.NewEncoder(w).Encode(cs)
-	//fmt.Fprintln(w, cs)
 	return
 }
 
@@ -284,23 +299,23 @@ func snapshotPDA(w http.ResponseWriter, r *http.Request) {
 	var vars = mux.Vars(r)
 	var id = vars["id"]
 	var kStr = vars["k"]
+	var message JSONMessage
 
 	// Convert string k to int
 	k, err := strconv.Atoi(kStr)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	var message JSONMessage
-
-	for i := 0; i < len(pdaArr); i++ {
-		if pdaArr[i].ID == id {
-			message.curState = currentState(&pdaArr[i])
-			message.quToken = pdaArr[i].HoldBackToken
-			message.peekK = peek(&pdaArr[i], k)
+		fmt.Fprintf(w, "%s", err)
+	} else {
+		for i := 0; i < len(pdaArr); i++ {
+			if pdaArr[i].ID == id {
+				message.curState = currentState(&pdaArr[i])
+				message.quToken = pdaArr[i].HoldBackToken
+				message.peekK = peek(&pdaArr[i], k)
+			}
 		}
+		json.NewEncoder(w).Encode(message)
 	}
-	json.NewEncoder(w).Encode(message)
+
 	return
 }
 
