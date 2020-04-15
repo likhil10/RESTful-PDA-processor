@@ -45,9 +45,6 @@ type PdaProcessor struct {
 	// This keeps a count of everytime peek method is called
 	Peek int
 
-	// This keeps a count for everytime a transition  is changed
-	TransitionCounter int
-
 	// This keeps a count for everytime current_state method is called
 	CurrentStateCounter int
 
@@ -62,6 +59,12 @@ type PdaProcessor struct {
 
 	// to store the position of the token last consumed
 	LastPosition int
+
+	// to store the position of eos
+	EosPosition int
+
+	// This keeps a count for everytime a transition  is changed
+	TransitionCounter int
 }
 
 // TokenList struct
@@ -99,7 +102,36 @@ func resetPDA(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("entered the if block")
 			pdaArr[i].TokenStack = []string{}
 			pdaArr[i].CurrentState = pdaArr[i].StartState
+			pdaArr[i].TransitionStack = []string{}
 			break
+		}
+	}
+}
+
+func eosPDA(w http.ResponseWriter, r *http.Request) {
+
+	var vars = mux.Vars(r)
+	var id = vars["id"]
+	var pos = vars["position"]
+	position, err := strconv.Atoi(pos)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("position 1", position)
+
+	for i := 0; i < len(pdaArr); i++ {
+		if pdaArr[i].ID == id {
+			fmt.Println("position 2", position)
+			if pdaArr[i].LastPosition == position {
+				fmt.Println("position 3", position)
+				eos(&pdaArr[i])
+			} else {
+				pdaArr[i].EosPosition = position
+				fmt.Println("position 4", position)
+				fmt.Println("position eos", pdaArr[i].EosPosition)
+			}
 		}
 	}
 }
@@ -181,26 +213,6 @@ func deletePda(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func eosPDA(w http.ResponseWriter, r *http.Request) {
-	var vars = mux.Vars(r)
-	var id = vars["id"]
-	var pos = vars["position"]
-	l, err := strconv.Atoi(pos)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for i := 0; i < len(pdaArr); i++ {
-		if pdaArr[i].ID == id {
-			if len(pdaArr[i].TokenStack) == l {
-				eos(&pdaArr[i])
-			} else {
-				fmt.Println(w, "Incorrect Position Value Passed")
-			}
-		}
-	}
-}
-
 func isAcceptedPDA(w http.ResponseWriter, r *http.Request) {
 	var vars = mux.Vars(r)
 	var id = vars["id"]
@@ -209,6 +221,7 @@ func isAcceptedPDA(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(pdaArr); i++ {
 		if pdaArr[i].ID == id {
 			accepted = isAccepted(&pdaArr[i])
+			break
 		}
 	}
 	json.NewEncoder(w).Encode(accepted)

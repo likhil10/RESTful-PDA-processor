@@ -36,8 +36,23 @@ func put(pda *PdaProcessor, position int, token string) {
 	transitionLength := len(transitions)
 	pda.CurrentStack = "null"
 	pda.IsAccepted = false
+
 	if pda.PutCounter == 1 {
 		putForTFirst(pda)
+	}
+	if pda.EosPosition == pda.LastPosition && pda.LastPosition != 0 {
+		takeToken = false
+		if len(pda.TransitionStack) > 0 {
+			if pda.TransitionStack[len(pda.TransitionStack)-1] == "q3" && len(pda.TokenStack) == 1 && pda.IsAccepted == true {
+				pda.CurrentStack = pda.TokenStack[0]
+				pda.CurrentState = "q4"
+				pda.TransitionStack = append(pda.TransitionStack, pda.CurrentState)
+				pop(pda)
+				// fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")
+			}
+			eos(pda)
+			return
+		}
 	}
 	if position == 1 || position == (pda.LastPosition+1) {
 		takeToken = true
@@ -92,6 +107,19 @@ gotoPoint:
 				pda.IsAccepted = false
 				goto gotoPoint
 			}
+		}
+	}
+	if pda.EosPosition == pda.LastPosition {
+		takeToken = false
+		if len(pda.TransitionStack) > 0 {
+			if pda.TransitionStack[len(pda.TransitionStack)-1] == "q3" && len(pda.TokenStack) == 1 && pda.IsAccepted == true {
+				pda.CurrentStack = pda.TokenStack[0]
+				pda.CurrentState = "q4"
+				pda.TransitionStack = append(pda.TransitionStack, pda.CurrentState)
+				pop(pda)
+				// fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")
+			}
+			eos(pda)
 		}
 	}
 }
@@ -150,10 +178,26 @@ func check(e error) {
 
 // Declares the end of string
 func eos(pda *PdaProcessor) {
-	if len(pda.TransitionStack) > 0 && pda.TransitionStack[0] == "q1" && pda.TransitionStack[len(pda.TransitionStack)-1] == "q4" {
+
+	if len(pda.TransitionStack) > 0 {
+		if pda.TransitionStack[len(pda.TransitionStack)-1] == "q3" && len(pda.TokenStack) == 1 && pda.IsAccepted == true {
+			pda.CurrentStack = pda.TokenStack[0]
+			pda.CurrentState = "q4"
+			pda.TransitionStack = append(pda.TransitionStack, pda.CurrentState)
+			pop(pda)
+			// fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")
+			if len(pda.TransitionStack) > 0 && pda.TransitionStack[0] == "q1" && pda.TransitionStack[len(pda.TransitionStack)-1] == "q4" {
+				fmt.Println(pda.TransitionStack[len(pda.TransitionStack)-1])
+				fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")
+			} else {
+				fmt.Println("pda=", pda.Name, ":method=eos:: Did not reach the end of string but EOS was called.")
+			}
+		}
+	} else if len(pda.TransitionStack) > 0 && pda.TransitionStack[0] == "q1" && pda.TransitionStack[len(pda.TransitionStack)-1] == "q4" {
+		fmt.Println(pda.TransitionStack[len(pda.TransitionStack)-1])
 		fmt.Println("pda=", pda.Name, ":method=eos:: Reached the End of String")
 	} else {
-		fmt.Println("pda=", pda.Name, ":method=eos::Did not reach the end of string but EOS was called.")
+		fmt.Println("pda=", pda.Name, ":method=eos:: Did not reach the end of string but EOS was called.")
 	}
 }
 
