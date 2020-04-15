@@ -135,23 +135,11 @@ func eosPDA(w http.ResponseWriter, r *http.Request) {
 }
 
 func createNewPda(w http.ResponseWriter, r *http.Request) {
-	// unmarshal the body of PUT request into new PDA struct and append this to our PDA array.
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	params := mux.Vars(r)
-	var pda PdaProcessor
-	json.Unmarshal(reqBody, &pda)
-	if len(pdaArr) > 0 {
-		for i := 0; i < len(pdaArr); i++ {
-			if pdaArr[i].ID == params["id"] {
-				fmt.Fprintf(w, "THIS PDA ALREADY EXISTS")
-			} else {
-				// update our global pdaArr array
-				pdaArr = append(pdaArr, pda)
-			}
-		}
+	rValue := open(w, r)
+	if rValue {
+		fmt.Fprintf(w, "PDA successfully created")
 	} else {
-		// update our global pdaArr array
-		pdaArr = append(pdaArr, pda)
+		fmt.Fprintf(w, "PDA already exists")
 	}
 }
 
@@ -166,16 +154,22 @@ func putPda(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		for i := 0; i < len(pdaArr); i++ {
 			if pdaArr[i].ID == id {
-				for j := 0; j < len(pdaArr[i].HoldBackPosition)-1; j++ {
-					if pdaArr[i].HoldBackPosition[j] == positionInt {
-						fmt.Fprintf(w, "The position is already taken, please input TOKEN for a new position")
-					}
-				}
-				if pdaArr[i].LastPosition > positionInt {
-					fmt.Fprintf(w, "The position is already taken, please input TOKEN for a new position")
+				if pdaArr[i].LastPosition == positionInt {
+					fmt.Fprintf(w, "This position is already taken, please input TOKEN for a new position")
 				} else {
-					put(&pdaArr[i], positionInt, token.Tokens)
-					break
+					for j := 0; j < len(pdaArr[i].HoldBackPosition)-1; j++ {
+						if pdaArr[i].HoldBackPosition[j] == positionInt {
+							fmt.Fprintf(w, "This position is already taken, please input TOKEN for a new position")
+							break
+						}
+					}
+					if pdaArr[i].LastPosition > positionInt {
+						fmt.Fprintf(w, "This position is already taken, please input TOKEN for a new position")
+						break
+					} else {
+						put(&pdaArr[i], positionInt, token.Tokens)
+						break
+					}
 				}
 			} else {
 				fmt.Fprintf(w, "Error finding PDA")

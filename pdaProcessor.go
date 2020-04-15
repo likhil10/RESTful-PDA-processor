@@ -3,22 +3,32 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // Unmarshals the jsonText string. Returns true if it succeeds.
-func (pda *PdaProcessor) open(jsonText string) bool {
+func open(w http.ResponseWriter, r *http.Request) bool {
 
-	if err := json.Unmarshal([]byte(jsonText), &pda); err != nil {
-		check(err)
+	// unmarshal the body of PUT request into new PDA struct and append this to our PDA array.
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	params := mux.Vars(r)
+	var pda PdaProcessor
+	json.Unmarshal(reqBody, &pda)
+
+	if len(pdaArr) > 0 {
+		for i := 0; i < len(pdaArr); i++ {
+			if pdaArr[i].ID == params["id"] {
+				return false
+			}
+			pdaArr = append(pdaArr, pda)
+		}
+	} else {
+		// update our global pdaArr array
+		pdaArr = append(pdaArr, pda)
 	}
-
-	// Validate input.
-	if len(pda.Name) == 0 || len(pda.States) == 0 || len(pda.InputAlphabet) == 0 ||
-		len(pda.StackAlphabet) == 0 || len(pda.AcceptingStates) == 0 || len(pda.StartState) == 0 ||
-		len(pda.Transitions) == 0 || len(pda.Eos) == 0 {
-		return false
-	}
-
 	return true
 }
 
