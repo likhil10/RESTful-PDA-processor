@@ -135,11 +135,35 @@ func eosPDA(w http.ResponseWriter, r *http.Request) {
 }
 
 func createNewPda(w http.ResponseWriter, r *http.Request) {
-	rValue := open(w, r)
+
+	// unmarshal the body of PUT request into new PDA struct and append this to our PDA array.
+	params := mux.Vars(r)
+	var enter bool
+	var rValue bool
+
+	fmt.Println(params)
+	if len(pdaArr) > 0 {
+		for i := 0; i < len(pdaArr); i++ {
+			fmt.Println(pdaArr[i].ID)
+			if pdaArr[i].ID == params["id"] {
+				enter = false
+				fmt.Println("HOW")
+				fmt.Fprintf(w, "PDA already exists")
+				break
+			} else {
+				enter = true
+				fmt.Println("HELLO JI")
+			}
+		}
+	} else {
+		enter = true
+	}
+	if enter {
+		rValue = open(w, r)
+	}
+
 	if rValue {
 		fmt.Fprintf(w, "PDA successfully created")
-	} else {
-		fmt.Fprintf(w, "PDA already exists")
 	}
 }
 
