@@ -74,11 +74,11 @@ type TokenList struct {
 }
 
 // JSONMessage Structure
-// type JSONMessage struct {
-// 	curState string
-// 	quToken  []string
-// 	peekK    []string
-// }
+type JSONMessage struct {
+	curState string
+	quToken  []string
+	peekK    []string
+}
 
 var pdaArr []PdaProcessor
 var tokenArr []TokenList
@@ -236,7 +236,6 @@ func deletePda(w http.ResponseWriter, r *http.Request) {
 		if pda.ID == id {
 			// updates our pdaArray array to remove the pda
 			pdaArr = append(pdaArr[:index], pdaArr[index+1:]...)
-			fmt.Fprintf(w, "PDA successfully deleted!")
 			break
 		} else {
 			fmt.Fprintf(w, "Error finding PDA")
@@ -290,7 +289,6 @@ func stackLenPDA(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(pdaArr); i++ {
 		if pdaArr[i].ID == id {
 			length = len(pdaArr[i].TokenStack)
-			break
 		} else {
 			fmt.Fprintf(w, "Error finding PDA")
 		}
@@ -307,7 +305,6 @@ func statePDA(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(pdaArr); i++ {
 		if pdaArr[i].ID == id {
 			cs = currentState(&pdaArr[i])
-			break
 		} else {
 			fmt.Fprintf(w, "Error finding PDA")
 		}
@@ -320,11 +317,7 @@ func snapshotPDA(w http.ResponseWriter, r *http.Request) {
 	var vars = mux.Vars(r)
 	var id = vars["id"]
 	var kStr = vars["k"]
-	//var message JSONMessage
-
-	var curState string
-	var quToken []string
-	var peekK []string
+	var message JSONMessage
 
 	// Convert string k to int
 	k, err := strconv.Atoi(kStr)
@@ -333,14 +326,12 @@ func snapshotPDA(w http.ResponseWriter, r *http.Request) {
 	} else {
 		for i := 0; i < len(pdaArr); i++ {
 			if pdaArr[i].ID == id {
-				curState = currentState(&pdaArr[i])
-				quToken = pdaArr[i].HoldBackToken
-				peekK = peek(&pdaArr[i], k)
+				message.curState = currentState(&pdaArr[i])
+				message.quToken = pdaArr[i].HoldBackToken
+				message.peekK = peek(&pdaArr[i], k)
 			}
 		}
-		json.NewEncoder(w).Encode(curState)
-		json.NewEncoder(w).Encode(quToken)
-		json.NewEncoder(w).Encode(peekK)
+		json.NewEncoder(w).Encode(message)
 	}
 
 	return
@@ -358,7 +349,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/pdas/{id}/tokens", getTokens).Methods("GET")
 	myRouter.HandleFunc("/pdas/{id}/delete", deletePda).Methods("DELETE")
 
-
+	//Rhea's APIs
 
 	myRouter.HandleFunc("/pdas/{id}/eos/{position}", eosPDA).Methods("PUT")
 	myRouter.HandleFunc("/pdas/{id}/is_accepted", isAcceptedPDA).Methods("GET")
