@@ -1,4 +1,4 @@
-# PushdownAutomaton
+# RESTful-PDA-processor
 
 In the previous project (https://github.com/likhil10/PushDown-Automata-for-0-n1-n), We implemented a simulator for PDAs. The simulator is effectively a processor of
 PDA “programs”. We will call the simulator a PDA processor. In this project, we will implement a
